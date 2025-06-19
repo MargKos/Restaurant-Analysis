@@ -15,7 +15,21 @@ Key.py
 
 # Folder Old
 
-.Old
+Old/
+
+
+# Data and secrets
+*.json
+*.db
+Key.py
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS system file
+.DS_Store
+
 
 # Distribution / packaging
 .Python
