@@ -5,10 +5,17 @@ __pycache__/
 
 # C extensions
 *.so
-
 # Data
 .json
 .db
+
+# Yelp Key
+
+Key.py
+
+# Folder Old
+
+.Old
 
 # Distribution / packaging
 .Python
@@ -186,12 +193,6 @@ cython_debug/
 
 # Ruff stuff:
 .ruff_cache/
-
-# Local key or config files
-Key.py
-.env
-*.env
-
 
 # PyPI configuration file
 .pypirc
