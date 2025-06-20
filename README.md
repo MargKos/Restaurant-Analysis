@@ -36,12 +36,12 @@ This project uses a graph-theoretic approach to analyze restaurant co-visitation
 ##  Folder Structure
 
 
-users.json # Synthetic/anonymized user reviews
-cleaned_yelp_data.db # Cleaned Yelp restaurant data in SQLite format
-Transition_Network.py # Builds the network & computes PageRank
-Fake_Users.py # Creates synthetic users
-Database.py # Cleans and stores Yelp data
-fetch_data.py # Pulls restaurant data from Yelp API
+- users.json # Synthetic/anonymized user reviews
+- cleaned_yelp_data.db # Cleaned Yelp restaurant data in SQLite format
+- Transition_Network.py # Builds the network & computes PageRank
+- Fake_Users.py # Creates synthetic users
+- Database.py # Cleans and stores Yelp data
+- fetch_data.py # Pulls restaurant data from Yelp API
 
 ## 🧪 How to Run
 
@@ -58,7 +58,7 @@ The project demonstrates how **graph-based modeling** can provide richer insight
 
 ---
 
-## ⚖️ Data Ethics
+## Data Ethics
 
 - No original Yelp user data is published.  
 - All users are either **synthetic** or **anonymized**.  
