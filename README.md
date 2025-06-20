@@ -13,13 +13,15 @@ This project uses a graph-theoretic approach to analyze restaurant co-visitation
    Standardized categories, filtered incomplete entries, and stored data in a SQLite database.
 
 3. **User Simulation**  
-   Created synthetic users to simulate co-visitation behavior based on realistic preferences.
+   Created synthetic users to simulate co-visitation behavior based on realistic preferences. Here we assumed, that a user
+   is prefering restaurant with similar price and categroy, where price is more important than categroy.
 
 4. **Transition Network Construction**  
    Built a directed weighted network where nodes are restaurants, and edge weights depend on both co-visitation frequency and rating-based transition probabilities.
 
 5. **Markov Modeling**  
    Applied PageRank to model long-term visitation behavior and compute the stationary distribution.
+   Herefore, chose the right damping factor and test statioanry property.
 
 ---
 
@@ -27,7 +29,7 @@ This project uses a graph-theoretic approach to analyze restaurant co-visitation
 
 - Popularity and quality are **not always aligned**.  
 - The **stationary distribution** reveals which restaurants users tend to return to over time.  
-- Certain cuisines (e.g., burgers, Thai, Indian) show stronger staying power than others.  
+- Certain cuisines (e.g., Burgers, Thai, Indian displays by letters in the plot below) show stronger staying power than others.  
 
 ![Results](Result.png)
 
