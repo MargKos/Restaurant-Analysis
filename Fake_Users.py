@@ -12,6 +12,11 @@ import sqlite3
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from collections import Counter
+import json
+
+''' Create users, by assigning users corresponding to the number of reviews, in addition we assume that 
+users prefer similar restaurants in terms of price and category
+'''
 
 # Load database
 conn = sqlite3.connect("cleaned_yelp_data.db")
@@ -31,7 +36,7 @@ restaurant_info = {
 
 
 number_of_reviews = sum(row[3] for row in rows)
-number_of_users = 1000   # select number of users (modellign parameter)
+number_of_users = 1050   # select total number of users (modellign parameter)
 
 #%% Assign number of reviews for each user assuming normal distribution
 users = []
@@ -64,7 +69,7 @@ restaurant_review_capacity = {row[0]: row[3] for row in rows}
 restaurant_id_list = [row[0] for row in rows]
 
 
-#%% Assign restaurant to users by their preferences, the first restaurant is chosen randomly the second choise prefers
+#%% Assign restaurant to users by their preferences, the first restaurant is chosen randomly the second choice prefers
 #restaurant with similar price and category
 
 for user in users:
@@ -74,8 +79,8 @@ for user in users:
         continue
 
     assigned = []
-    visited_prices = defaultdict(int)  # dictionary which track how number of visits of this user per price
-    visited_categories = defaultdict(int) # dictionary which track how number of visits of this user per categroy
+    visited_prices = defaultdict(int)  # dictionary which tracks number of visits of this user per price
+    visited_categories = defaultdict(int) # dictionary which tracks number of visits of this user per categroy
 
     # First restaurant: random
     available_restaurants = [rid for rid in restaurant_id_list if restaurant_review_capacity[rid] > 0]
@@ -91,7 +96,7 @@ for user in users:
     visited_prices[info['price']] += 1
     visited_categories[info['cleaned_category']] += 1  # update dict
    
-    # Choose next restaurant accoring to dict
+    # Choose next restaurant accoring to dict visited_prices and visited_categories
     for _ in range(number - 1):
         available_restaurants = [
             rid for rid in restaurant_id_list
@@ -122,7 +127,7 @@ for user in users:
         assigned.append(chosen)
         restaurant_review_capacity[chosen] -= 1
 
-        # Update dict abd restaurants pool
+        # Update dict and restaurants pool
         info = restaurant_info[chosen]
         visited_prices[info['price']] += 1
         visited_categories[info['cleaned_category']] += 1
@@ -133,35 +138,34 @@ for user in users:
 
 
 
-#%%
+#%% Example: preference of one users
 
 
 # Global dictionaries to hold total preferences
-global_price_counts = defaultdict(int)
-global_category_counts = defaultdict(int)
+user_price_counts = defaultdict(int)
+user_category_counts = defaultdict(int)
 
-# Example
+
 user=users[9]
 for rid in user.get('reviewed_restaurants', []):
     info = restaurant_info[rid]
     price = info['price']
     category = info['cleaned_category']
 
-    global_price_counts[price] += 1
-    global_category_counts[category] += 1
+    user_price_counts[price] += 1
+    user_category_counts[category] += 1
 
 # Print summary
-print("🔢 Global Price Preferences:")
-for price, count in sorted(global_price_counts.items(), key=lambda x: -x[1]):
+print("User Price Preferences:")
+for price, count in sorted(user_price_counts.items(), key=lambda x: -x[1]):
     print(f"  {price}: {count}")
 
-print("\n🔢 Global Category Preferences:")
-for cat, count in sorted(global_category_counts.items(), key=lambda x: -x[1]):
+print("User Category Preferences:")
+for cat, count in sorted(user_category_counts.items(), key=lambda x: -x[1]):
     print(f"  {cat}: {count}")
     
     
 #%% Save users
-import json
 
 with open("users.json", "w") as f:
     json.dump(users, f, indent=4)

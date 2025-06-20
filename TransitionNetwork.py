@@ -14,6 +14,9 @@ import json
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
+import string
+import itertools
+from scipy import sparse
 # Connect to Database
 conn = sqlite3.connect("cleaned_yelp_data.db")
 cursor = conn.cursor()
@@ -44,7 +47,6 @@ for (r1, r2), count in co_visits.items():
 
 # get information of restaurants
 
-# Connect to DB and build ID→info mapping
 cursor.execute("SELECT id, name, rating, review_count, price, category, cleaned_category, city FROM cleaned_restaurants;")
 rows = cursor.fetchall()
 
@@ -65,7 +67,7 @@ for (u, v), count in co_visits.items():
 G_dir = nx.DiGraph()
 
 for u, v, data in G.edges(data=True):
-    weight = data.get("weight", 1)
+    weight = data.get("weight", 1) # weight= number of visits by some users between res. u and v
     rating_u = restaurant_info.get(u, [None, None, 0])[2] 
     rating_v = restaurant_info.get(v, [None, None, 0])[2]
 
@@ -78,18 +80,43 @@ for u, v, data in G.edges(data=True):
     G_dir.add_edge(u, v, weight=norm_u * p_u) # update edges
     G_dir.add_edge(v, u, weight=norm_v * p_v)
 
-#%% Calculate Stationary Distribution
-stationary = nx.pagerank(G_dir, weight='weight')
+
+
+
+#%% Calculates Page Rank
+stationary = nx.pagerank(G_dir,alpha=1, weight='weight')
 sorted_nodes = sorted(stationary.items(), key=lambda x: x[1], reverse=True)
 
 fig = plt.figure(figsize=(8, 5))
-plt.plot(np.sort(list(stationary.values())))
-plt.grid(True)
+plt.plot(np.sort(list(stationary.values())), 'o')
+plt.xlabel('Restautan_ID',fontsize=15 )
+plt.ylabel('Stationary Distribution',fontsize=15 )
+plt.xticks(fontsize=15)
+plt.yticks(fontsize=15)
+plt.grid('True')
 plt.tight_layout()
 plt.show()
-#%% Print Top 40 Restaurants
-print("\U0001F3C6 Top 40 Restaurants by Stationary Distribution:\n")
-for i, (rest_id, score) in enumerate(sorted_nodes[:40], 1):
+
+#%% Test
+
+nodes = list(G_dir.nodes())
+# Build stochastic matrix with damping, here alpha=1
+P = nx.google_matrix(G_dir, alpha=1, nodelist=nodes, weight='weight')
+P = np.array(P)
+pi = np.array([stationary[node] for node in nodes])  # shape (n,)
+
+# Check deviation
+pi_diff = pi @ P - pi
+
+print("Deviation from stationary:", np.linalg.norm(pi_diff)) # almost 0 meanes P has good properties
+
+
+#%% Print Top 22 Restaurants
+
+# from the above plot one can determine which restaurants are the most outstanding
+
+print(" Top 22 Restaurants by Stationary Distribution:\n")
+for i, (rest_id, score) in enumerate(sorted_nodes[:22], 1):
     info = restaurant_info.get(rest_id)
     if info:
         print(f"{i:2d}. {info[1]} ({info[7]})")
@@ -100,9 +127,25 @@ for i, (rest_id, score) in enumerate(sorted_nodes[:40], 1):
         print(f"    → Stationary Probability: {score:.5f}")
         print("-" * 60)
 
-#%% Average Stationary and Rating  per Category
+#%% Print Worse 10 Restaurants
 
-# Group stationary values and ratings by category
+sorted_nodes_by_stationary = sorted(stationary.items(), key=lambda x: x[1])
+
+print("😞 Worse 10 Restaurants by Stationary Distribution:\n")
+for i, (rest_id, score) in enumerate(sorted_nodes_by_stationary[:10], 1):
+    info = restaurant_info.get(rest_id)
+    if info:
+        print(f"{i:2d}. {info[1]} ({info[7]})")
+        print(f"    → Rating: {info[2]}")
+        print(f"    → Reviews: {info[3]}")
+        print(f"    → Price: {info[4]}")
+        print(f"    → Category: {info[6]}")
+        print(f"    → Stationary Probability: {score:.5f}")
+        print("-" * 60)
+
+#%% Stationary Distribution and Rating  per Category
+
+# Group stationary distribution values and ratings by category
 category_stationary = defaultdict(list)
 category_ratings = defaultdict(list)
 
@@ -118,18 +161,59 @@ for rest_id, prob in stationary.items():
 avg_stationary = {cat: np.mean(vals) for cat, vals in category_stationary.items()}
 avg_rating = {cat: np.mean(vals) for cat, vals in category_ratings.items()}
 
-# Plot
+#%%
 plt.figure(figsize=(10, 6))
 
 for cat in avg_stationary:
     x = avg_rating.get(cat, 0)
     y = avg_stationary[cat]
-    plt.scatter(x, y)
-    plt.annotate(cat, (x, y), fontsize=8, alpha=0.8)
+    if x > 0 and y > 0:  # log scale requires positive values
+        plt.scatter(x, y)
+        plt.annotate(cat, (x, y), fontsize=12, alpha=0.8)
 
-plt.xlabel("Average Rating per Category")
-plt.ylabel("Average Stationary Probability per Category")
-plt.title("Category Rating vs Stationary Distribution")
-plt.grid(True)
+plt.xscale("log")
+plt.yscale("log")
+
+plt.xlabel('Average Rating (log scale)', fontsize=15)
+plt.ylabel('Stationary Distribution (log scale)', fontsize=15)
+plt.xticks(fontsize=12)
+plt.yticks(fontsize=12)
+plt.title("Category Rating vs Stationary Probability (Log-Log Scale)", fontsize=15)
+plt.grid(True, which="both", linestyle='--', linewidth=0.5)
 plt.tight_layout()
 plt.show()
+
+#%%
+
+# Generate label list: A, B, ..., Z, AA, AB, ..., ZZ
+def generate_labels():
+    letters = string.ascii_uppercase
+    for size in range(1, 3):  # 1-letter and 2-letter combos
+        for combo in itertools.product(letters, repeat=size):
+            yield ''.join(combo)
+
+labels_gen = generate_labels()
+label_map = {cat: label for cat, label in zip(sorted(avg_stationary.keys()), labels_gen)}
+
+# Plot
+plt.figure(figsize=(10, 6))
+
+for cat in sorted(avg_stationary.keys()):
+    x = avg_rating.get(cat, 0)
+    y = avg_stationary.get(cat, 0)
+    if x > 0 and y > 0:
+        plt.scatter(x, y)
+        plt.annotate(label_map[cat], (x, y), fontsize=13, alpha=0.8)
+
+plt.xlabel('Average Rating', fontsize=25)
+plt.ylabel('Stationary Distribution', fontsize=25)
+plt.xticks(fontsize=25)
+plt.yticks(fontsize=25)
+plt.title("Category Rating vs Stationary Distribution", fontsize=25)
+plt.grid(True, which="both", linestyle='--', linewidth=0.5)
+plt.tight_layout()
+plt.savefig('Result.png')
+
+
+
+

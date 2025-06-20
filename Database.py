@@ -152,7 +152,7 @@ cursor2.execute("SELECT * FROM cleaned_restaurants WHERE cleaned_category = 'Uni
 rows = cursor2.fetchall()
 
 k=0
-# Print each matching restaurant
+# Print each not identified restaurant
 for row in rows:
     print(row)
     k=k+1

@@ -56,11 +56,11 @@ def fetch_yelp(offset=0):
 
 # Loop through multiple pages ( 200 businesses, split into 4 pages of 50)
 for offset in range(0, 200, 50):
-    for b in fetch_yelp(offset):
+    for b in fetch_yelp(offset):  # b represents one business
         categories = ", ".join([c["title"] for c in b.get("categories", [])])
         price = b.get("price", "N/A")
         city = b["location"]["city"]
-
+        #insert data into restaurants table
         cursor.execute("""
         INSERT OR IGNORE INTO restaurants (id, name, rating, review_count, price, category, city)
         VALUES (?, ?, ?, ?, ?, ?, ?)
