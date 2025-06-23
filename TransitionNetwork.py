@@ -93,7 +93,7 @@ for node in G_dir.nodes:
     category = restaurant_info.get(node, [None]*7)[6]  # cleaned_category
     category_to_nodes[category].append(node)
 
-# Pick N nodes per category (e.g. 5 nodes from 4 categories)
+# 
 selected_categories = [ 'Austrian', 'Vietnamese', 'Fast Food' ]  
 nodes_per_category =10
 
@@ -120,7 +120,7 @@ categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes)
 cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))  # assign color per category
 cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
 
-k=0
+
 for node in G_sample.nodes:
     info = restaurant_info.get(node)
     rating = info[2]
@@ -129,8 +129,6 @@ for node in G_sample.nodes:
     p_u = 1 - (rating - 1) / 4
     p_u_values[node] = round(p_u, 2)
     category_labels[node] = f"\n{rating, name}" # uncomment if no data issues
-    #category_labels[node] = f"\n{rating, k}"    # uncomment if no data issues
-    k=k+1
     category_colors[node] = cat_color_map[category]
 
 # Get edge weights
@@ -168,10 +166,10 @@ sm.set_array(edge_weights)
 
 
 
-cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
-cbar.set_label("Transition Probability", fontsize=12)
-
-plt.title("Restaurant Transition Network\nNode Color = Category, Edge Color = Transition Probability", fontsize=15)
+cbar = plt.colorbar(sm, ax=ax, shrink=1.2)
+cbar.set_label("Transition Probability", fontsize=26)
+cbar.ax.tick_params(labelsize=26)  
+plt.title("Restaurant Transition Network\nNode Color = Category, Edge Color = Transition Probability", fontsize=26)
 plt.tight_layout()
 #plt.savefig('TransitionNW.png')
 
