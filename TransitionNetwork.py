@@ -94,7 +94,7 @@ for node in G_dir.nodes:
     category_to_nodes[category].append(node)
 
 # Pick N nodes per category (e.g. 5 nodes from 4 categories)
-selected_categories = ['German', 'Thai', 'Indian', 'Burgers']  
+selected_categories = [ 'Austrian', 'Vietnamese', 'Fast Food' ]  
 nodes_per_category =10
 
 sample_nodes = []
@@ -108,7 +108,7 @@ for cat in selected_categories:
 G_sample = G_dir.subgraph(sample_nodes)
 
 # Filter out weak edges (weight < 0.002)
-edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.002]
+edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.001]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
 # Compute p_u and category labels
@@ -117,9 +117,10 @@ category_labels = {}
 category_colors = {}
 
 categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes))
-cmap_nodes = plt.cm.get_cmap("tab20", len(categories))  # assign color per category
+cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))  # assign color per category
 cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
 
+k=0
 for node in G_sample.nodes:
     info = restaurant_info.get(node)
     rating = info[2]
@@ -127,35 +128,41 @@ for node in G_sample.nodes:
     name=info[1]
     p_u = 1 - (rating - 1) / 4
     p_u_values[node] = round(p_u, 2)
-    category_labels[node] = f"\n{rating, name}"
+    category_labels[node] = f"\n{rating, name}" # uncomment if no data issues
+    #category_labels[node] = f"\n{rating, k}"    # uncomment if no data issues
+    k=k+1
     category_colors[node] = cat_color_map[category]
 
 # Get edge weights
 edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
 
 # Draw
-pos = nx.spring_layout(G_sample, seed=42)
+pos = nx.kamada_kawai_layout(G_sample)  # More separation, sometimes better for directed graphs
+
 fig, ax = plt.subplots(figsize=(15, 10))
 
-nx.draw_networkx_nodes(G_sample, pos, node_size=1000,
+nx.draw_networkx_nodes(G_sample, pos, node_size=300, alpha=0.5,
                        node_color=[category_colors[n] for n in G_sample.nodes], ax=ax)
 
 nx.draw_networkx_edges(
     G_sample,
     pos,
     edge_color=edge_weights,
-    edge_cmap=plt.cm.Greys,
+    edge_cmap=plt.cm.Blues,
     arrows=True,
-    arrowstyle="->",
-    width=2,
+    arrowstyle='-|>',
+    connectionstyle='arc3,rad=0.4',  # curve arrows to reduce overlap
+    arrowsize=30,            # ← Make this bigger (default is 10)
+    width=2.5, 
     ax=ax
 )
+
 
 nx.draw_networkx_labels(G_sample, pos, labels=category_labels, font_size=10, ax=ax)
 
 # Colorbar for edge weights
-norm = colors.Normalize(vmin=0, vmax=0.02)
-sm = plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Greys)
+norm = colors.Normalize(vmin=-0.1, vmax=0.1)  # adjsut for better visibility
+sm = plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Blues)
 sm.set_array(edge_weights)
 
 
@@ -166,7 +173,7 @@ cbar.set_label("Transition Probability", fontsize=12)
 
 plt.title("Restaurant Transition Network\nNode Color = Category, Edge Color = Transition Probability", fontsize=15)
 plt.tight_layout()
-
+#plt.savefig('TransitionNW.png')
 
 
 

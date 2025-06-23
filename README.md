@@ -34,9 +34,36 @@ based on Yelp data. It explores the relationship between **rating** (quality) an
 - The **stationary distribution** reveals to which restaurants users tend to return to over time.  
 - Certain cuisines (e.g., Burgers, Thai, Indian displays by letters in the plot below) show stronger staying power than others.  
 
-![Results](Result.png)
+#  Results
+
+## ![Results](Result.png)
+
+This plot visualizes the **average stationary distribution** (a PageRank-like popularity score) against the **average rating** for each restaurant category.  
+It highlights interesting contrasts between popularity and perceived quality:
+
+- Some categories achieve high popularity despite varying ratings.
+- Others, with strong ratings, may still be niche and not frequently revisited.
+
+This helps distinguish between categories that are broadly appealing and those that are highly rated but less frequently chosen.
 
 ---
+
+## ![Results](TransitionNW.png)
+
+This directed network graph illustrates **user transition dynamics** between restaurants. The network is built from:
+
+- **Simulated users** who move between restaurants based on co-visitation frequency and rating-driven likelihoods.
+- **Nodes** represent individual restaurants, colored by their **category** (e.g., Fast Food, Austrian, Vietnamese).
+- **Node labels** show the **restaurant's rating and name**.
+- **Edges** represent **directional transitions**. Darker edges indicate **higher transition probabilities**.
+
+### Observations:
+
+- Two prominent **clusters** of restaurants emerge, likely representing shared customer bases and stylistic affinity.
+- A notably strong connection is seen betwee two nodes, suggesting they are popular with shared customers.
+
+This visualization reveals how users move across the culinary landscape and helps uncover **category-level dynamics** and **local popularity hubs**.
+
 
 ##  Folder and Data Structure
 
