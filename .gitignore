@@ -1,0 +1,6 @@
+Key.py
+Old/
+*.db
+*.json
+__pycache__/
+
