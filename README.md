@@ -1,49 +1,53 @@
 # Restaurant-Analysis
 
-This project uses a graph-theoretic approach to analyze restaurant co-visitation behavior based on Yelp data. It explores the relationship between **rating** (quality) and **popularity** (how often a restaurant is visited).
+This project uses a graph-theoretic approach to analyze restaurant co-visitation behavior
+based on Yelp data. It explores the relationship between **rating** (quality) and **popularity** (how often a restaurant is visited).
 
 ---
 
 ##  Project Pipeline
 
 1. **Data Collection**  
-   Fetched restaurant data via the Yelp API.
+   Fetched restaurant data via the Yelp API ('fetch_data.py').
 
 2. **Data Cleaning**  
-   Standardized categories, filtered incomplete entries, and stored data in a SQLite database.
+   Standardized categories and stores data in a SQLite database ('Database.py').
 
 3. **User Simulation**  
    Created synthetic users to simulate co-visitation behavior based on realistic preferences. Here we assumed, that a user
-   is prefering restaurant with similar price and categroy, where price is more important than categroy.
+   is prefering restaurants with similar price and category, where price is more important than categroy ('Fake_Users.py').
 
 4. **Transition Network Construction**  
-   Built a directed weighted network where nodes are restaurants, and edge weights depend on both co-visitation frequency and rating-based transition probabilities.
+   Built a directed weighted network where nodes are restaurants, and edge weights depend on both co-visitation frequency and rating.
+   The lower the rating, the higher the probability of an user to leave the restaurant: p_u = 1 - (rating_u - 1) / 4
+   The transition probability from restaurant u to v is proportional to the co-visitation frequency between u and v, normalized by the total number of transitions from u.
 
 5. **Markov Modeling**  
    Applied PageRank to model long-term visitation behavior and compute the stationary distribution.
-   Herefore, chose the right damping factor and test statioanry property.
+   Herefore, chose the right damping factor alpha and test statioanry property.
 
 ---
 
 ##  Key Insights
 
 - Popularity and quality are **not always aligned**.  
-- The **stationary distribution** reveals which restaurants users tend to return to over time.  
+- The **stationary distribution** reveals to which restaurants users tend to return to over time.  
 - Certain cuisines (e.g., Burgers, Thai, Indian displays by letters in the plot below) show stronger staying power than others.  
 
 ![Results](Result.png)
 
 ---
 
-##  Folder Structure
+##  Folder and Data Structure
 
-
-- users.json # Synthetic/anonymized user reviews
-- cleaned_yelp_data.db # Cleaned Yelp restaurant data in SQLite format
-- Transition_Network.py # Builds the network & computes PageRank
-- Fake_Users.py # Creates synthetic users
-- Database.py # Cleans and stores Yelp data
 - fetch_data.py # Pulls restaurant data from Yelp API
+- Database.py # Cleans and stores Yelp data
+- cleaned_yelp_data.db # Cleaned Yelp restaurant data in SQLite format
+- Fake_Users.py # Creates synthetic users
+- users.json # Synthetic/anonymized user reviews
+- Transition_Network.py # Builds the network & computes PageRank
+
+
 
 ## 🧪 How to Run
 
@@ -63,7 +67,7 @@ The project demonstrates how **graph-based modeling** can provide richer insight
 ## Data Ethics
 
 - No original Yelp user data is published.  
-- All users are either **synthetic** or **anonymized**.  
+- All users are **synthetic**.
 - Restaurant names may be pseudonymized in any released visualizations.
 
 ---

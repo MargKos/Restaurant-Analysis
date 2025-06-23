@@ -17,6 +17,10 @@ import matplotlib.pyplot as plt
 import string
 import itertools
 from scipy import sparse
+import matplotlib.pyplot as plt
+import networkx as nx
+import matplotlib.colors as colors
+import random
 # Connect to Database
 conn = sqlite3.connect("cleaned_yelp_data.db")
 cursor = conn.cursor()
@@ -79,6 +83,89 @@ for u, v, data in G.edges(data=True):
 
     G_dir.add_edge(u, v, weight=norm_u * p_u) # update edges
     G_dir.add_edge(v, u, weight=norm_v * p_v)
+
+
+#%% Plot Graph
+
+# Group nodes by cleaned category
+category_to_nodes = defaultdict(list)
+for node in G_dir.nodes:
+    category = restaurant_info.get(node, [None]*7)[6]  # cleaned_category
+    category_to_nodes[category].append(node)
+
+# Pick N nodes per category (e.g. 5 nodes from 4 categories)
+selected_categories = ['German', 'Thai', 'Indian', 'Burgers']  
+nodes_per_category =10
+
+sample_nodes = []
+for cat in selected_categories:
+    nodes = category_to_nodes.get(cat, [])
+    if len(nodes) < nodes_per_category:
+        print(f"⚠️  Not enough restaurants in '{cat}': only {len(nodes)} available.")
+    sample = random.sample(nodes, min(nodes_per_category, len(nodes)))
+    sample_nodes.extend(sample)
+
+G_sample = G_dir.subgraph(sample_nodes)
+
+# Filter out weak edges (weight < 0.002)
+edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.002]
+G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
+
+# Compute p_u and category labels
+p_u_values = {}
+category_labels = {}
+category_colors = {}
+
+categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes))
+cmap_nodes = plt.cm.get_cmap("tab20", len(categories))  # assign color per category
+cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
+
+for node in G_sample.nodes:
+    info = restaurant_info.get(node)
+    rating = info[2]
+    category = info[6]
+    name=info[1]
+    p_u = 1 - (rating - 1) / 4
+    p_u_values[node] = round(p_u, 2)
+    category_labels[node] = f"\n{rating, name}"
+    category_colors[node] = cat_color_map[category]
+
+# Get edge weights
+edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
+
+# Draw
+pos = nx.spring_layout(G_sample, seed=42)
+fig, ax = plt.subplots(figsize=(15, 10))
+
+nx.draw_networkx_nodes(G_sample, pos, node_size=1000,
+                       node_color=[category_colors[n] for n in G_sample.nodes], ax=ax)
+
+nx.draw_networkx_edges(
+    G_sample,
+    pos,
+    edge_color=edge_weights,
+    edge_cmap=plt.cm.Greys,
+    arrows=True,
+    arrowstyle="->",
+    width=2,
+    ax=ax
+)
+
+nx.draw_networkx_labels(G_sample, pos, labels=category_labels, font_size=10, ax=ax)
+
+# Colorbar for edge weights
+norm = colors.Normalize(vmin=0, vmax=0.02)
+sm = plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Greys)
+sm.set_array(edge_weights)
+
+
+
+
+cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
+cbar.set_label("Transition Probability", fontsize=12)
+
+plt.title("Restaurant Transition Network\nNode Color = Category, Edge Color = Transition Probability", fontsize=15)
+plt.tight_layout()
 
 
 
@@ -182,6 +269,10 @@ plt.title("Category Rating vs Stationary Probability (Log-Log Scale)", fontsize=
 plt.grid(True, which="both", linestyle='--', linewidth=0.5)
 plt.tight_layout()
 plt.show()
+
+# print results
+
+print(avg_stationary)
 
 #%%
 
