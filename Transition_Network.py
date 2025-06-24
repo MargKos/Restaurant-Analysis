@@ -98,7 +98,7 @@ for node in G_dir.nodes:
     category_to_nodes[category].append(node)
 
 # Select categories to visualize
-selected_categories = ['Middle Eastern','American','European']
+selected_categories = ['Asian','Italian','Fast Food']
 
 nodes_per_category = 10
 
@@ -113,7 +113,7 @@ for cat in selected_categories:
 G_sample = G_dir.subgraph(sample_nodes)
 
 # Filter out weak edges (weight < 0.001)
-edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.001]
+edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.005]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
 # Compute visual properties
@@ -233,7 +233,7 @@ for node in G_dir.nodes:
     category_to_nodes[category].append(node)
 
 # Select categories to visualize
-selected_categories = ['Middle Eastern','American','European']
+selected_categories = ['Asian','Italian','Fast Food']
 
 nodes_per_category = 10
 
@@ -248,7 +248,7 @@ for cat in selected_categories:
 G_sample = G_dir.subgraph(sample_nodes)
 
 # Filter out weak edges (weight < 0.001)
-edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.001]
+edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.005]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
 # Compute visual properties
@@ -296,9 +296,9 @@ edge_vmax = np.percentile(edge_weights, 95)  # Use 95th percentile as max to pre
 
 
 category_code_map = {
-    'Middle Eastern': 'W',
-    'American': 'A',
-    'European': 'J'
+    'Asian': 'C',
+    'Italian': 'Q',
+    'Fast Food': 'K'
 }
 
 

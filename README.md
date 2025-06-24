@@ -60,13 +60,11 @@ This directed network graph illustrates **user transition dynamics** between res
 - **Node labels** show the **restaurant's rating and name**.
 - **Edges** represent **directional transitions**. Darker edges indicate **higher transition probabilities**.
 
-### Observations:
-
-- Two prominent **clusters** of restaurants emerge, likely representing shared customer bases and stylistic affinity.
-- A notably strong connection is seen betwee two nodes, suggesting they are popular with shared customers.
 
 This visualization reveals how users move across the culinary landscape and helps uncover **category-level dynamics** and **local popularity hubs**.
-
+For example, we observe strong exchange between the restaurants of the grey cluster 'K'. Where the restarants
+of the category 'C' and 'Q' are not as well connected. Furthermore the second restaurant of the 
+grey cluster experience a lot of flow. 
 
 ##  Folder and Data Structure
 
