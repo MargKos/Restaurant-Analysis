@@ -98,7 +98,8 @@ for node in G_dir.nodes:
     category_to_nodes[category].append(node)
 
 # Select categories to visualize
-selected_categories = ['Austrian', 'German' 'Fast Food', 'Vietnamese', 'Chinese']
+selected_categories = ['Middle Eastern','American','European']
+
 nodes_per_category = 10
 
 sample_nodes = []
@@ -169,7 +170,7 @@ nx.draw_networkx_edges(
     width=2,
     arrows=True,                # Ensure arrows are visible
     arrowstyle='-|>',           # Standard arrow
-    arrowsize=20,               # Larger arrowhead
+    arrowsize=40,               # Larger arrowhead
     connectionstyle='arc3,rad=0.2',  # Gentle curves   
     ax=ax
     
@@ -185,7 +186,7 @@ sm = plt.cm.ScalarMappable(
 nx.draw_networkx_labels(
     G_sample, pos, 
     labels=category_labels, 
-    font_size=10,
+    font_size=20,
     ax=ax
 )
 
@@ -195,11 +196,13 @@ legend_handles = [
     for cat in sorted(set(restaurant_info[node][6] for node in G_sample.nodes))
 ]
 
+
+
 # Add flattened legend
 legend = plt.legend(
     handles=legend_handles,
     fontsize=24,
-    bbox_to_anchor=(0, 1.2),
+    bbox_to_anchor=(0, 1),
     loc='upper left',
     ncol=3,  # Adjust number of columns as needed
     frameon=False,
@@ -211,7 +214,7 @@ legend = plt.legend(
 
 cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
 cbar.set_label("Transition Probability", fontsize=24)
-cbar.ax.tick_params(labelsize=22)
+cbar.ax.tick_params(labelsize=24)
 
 # Adjust layout
 
@@ -219,6 +222,157 @@ plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave 10% space on right for legend
 
 plt.show()
 
+#%% Anonymous Version
+
+
+
+# Group nodes by cleaned category
+category_to_nodes = defaultdict(list)
+for node in G_dir.nodes:
+    category = restaurant_info.get(node, [None]*7)[6]  # cleaned_category
+    category_to_nodes[category].append(node)
+
+# Select categories to visualize
+selected_categories = ['Middle Eastern','American','European']
+
+nodes_per_category = 10
+
+sample_nodes = []
+for cat in selected_categories:
+    nodes = category_to_nodes.get(cat, [])
+    if len(nodes) < nodes_per_category:
+        print(f"⚠️ Not enough restaurants in '{cat}': only {len(nodes)} available.")
+    sample = random.sample(nodes, min(nodes_per_category, len(nodes)))
+    sample_nodes.extend(sample)
+
+G_sample = G_dir.subgraph(sample_nodes)
+
+# Filter out weak edges (weight < 0.001)
+edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.001]
+G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
+
+# Compute visual properties
+p_u_values = {}
+category_labels = {}
+category_colors = {}
+
+categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes))
+
+cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))
+cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
+
+for node in G_sample.nodes:
+    info = restaurant_info.get(node)
+    rating = info[2]
+    category = info[6]
+    name = info[1]
+    category_colors[node] = cat_color_map[category]
+
+# Get edge weights
+edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
+
+# Create figure with extra width for legend
+fig, ax = plt.subplots(figsize=(20, 12))
+
+# Assign categories for layout
+for node in G_sample.nodes:
+    G_sample.nodes[node]["subset"] = restaurant_info[node][6]
+
+# Generate multipartite layout
+pos = nx.multipartite_layout(G_sample)
+
+# Draw network
+nx.draw_networkx_nodes(
+    G_sample, pos, 
+    node_size=800,
+    node_color=[category_colors[n] for n in G_sample.nodes],
+    alpha=0.8,
+    ax=ax
+)
+
+
+edge_vmin = 0
+edge_vmax = np.percentile(edge_weights, 95)  # Use 95th percentile as max to prevent outlier distortion
+
+
+category_code_map = {
+    'Middle Eastern': 'W',
+    'American': 'A',
+    'European': 'J'
+}
+
+
+legend_handles = [
+    mpatches.Patch(color=cat_color_map[cat], label=code)
+    for cat, code in category_code_map.items()
+]
+
+
+plt.legend(
+    handles=legend_handles,
+    title="Category Codes",
+    fontsize=12,
+    bbox_to_anchor=(1.05, 1),
+    frameon=False
+)
+
+nx.draw_networkx_edges(
+    G_sample,
+    pos,
+    edge_color=edge_weights,
+    edge_cmap=plt.cm.Blues,
+    edge_vmin=edge_vmin,
+    edge_vmax=edge_vmax,  # This ensures darkest blue is used
+    width=2,
+    arrows=True,                # Ensure arrows are visible
+    arrowstyle='-|>',           # Standard arrow
+    arrowsize=40,               # Larger arrowhead
+    connectionstyle='arc3,rad=0.2',  # Gentle curves   
+    ax=ax
+    
+)
+
+
+sm = plt.cm.ScalarMappable(
+    norm=colors.Normalize(vmin=edge_vmin, vmax=edge_vmax),
+    cmap=plt.cm.Blues
+)
+
+
+nx.draw_networkx_labels(
+    G_sample, pos, 
+    labels=category_labels, 
+    font_size=20,
+    ax=ax
+)
+
+
+
+
+
+# Add flattened legend
+legend = plt.legend(
+    handles=legend_handles,
+    fontsize=24,
+    bbox_to_anchor=(0, 1),
+    loc='upper left',
+    ncol=3,  # Adjust number of columns as needed
+    frameon=False,
+    handletextpad=0.3,
+    columnspacing=0.8
+)
+
+# Add colorbar
+
+cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
+cbar.set_label("Transition Probability", fontsize=24)
+cbar.ax.tick_params(labelsize=24)
+
+# Adjust layout
+
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave 10% space on right for legend
+
+plt.savefig('TransitionNW')
 
 
 #%% Calculates Page Rank
