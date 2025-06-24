@@ -10,7 +10,10 @@ import sqlite3
 import requests
 from Key import API_KEY
 
-# Config
+# calls Yelp-API restaurannts, extracts from json and saves as SQL database
+
+# Configuration: specify location and type 
+
 LOCATION = "Berlin"
 TERM = "restaurant"
 LIMIT = 50  # Yelp's per-request limit
@@ -90,4 +93,4 @@ for row in rows:
     print(row)
 
 
-
+conn.close()

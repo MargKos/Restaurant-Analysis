@@ -158,3 +158,4 @@ for row in rows:
     k=k+1
 
 conn.close()
+cleaned_conn.close()

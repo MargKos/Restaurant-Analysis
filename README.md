@@ -11,17 +11,20 @@ based on Yelp data. It explores the relationship between **rating** (quality) an
    Fetched restaurant data via the Yelp API ('fetch_data.py').
 
 2. **Data Cleaning**  
-   Standardized categories and stores data in a SQLite database ('Database.py').
+   Standardized categories and stores data in a SQLite database ('ETL.py').
 
 3. **User Simulation**  
    Created synthetic users to simulate co-visitation behavior based on realistic preferences. Here we assumed, that a user
    is prefering restaurants with similar price and category, where price is more important than categroy ('Fake_Users.py').
+   Furthermore, we assume that the number of reviews a visitor is giving is Poisson distributed.
 
 4. **Transition Network Construction**  
-   Built a directed weighted network where nodes are restaurants, and edge weights depend on both co-visitation frequency and rating.
+   Built a directed weighted network where nodes are restaurants, and edge weights depend on both co-visitation frequency and rating. Only 
+   restarants with at least 'boundary' co-visits are connected and part of the final network.
    The lower the rating, the higher the probability of an user to leave the restaurant: p_u = 1 - (rating_u - 1) / 4
    The transition probability from restaurant u to v is proportional to the co-visitation frequency between u and v, normalized by the total number of transitions from u.
-
+    
+    
 5. **Markov Modeling**  
    Applied PageRank to model long-term visitation behavior and compute the stationary distribution.
    Herefore, chose the right damping factor alpha and test statioanry property.
@@ -68,19 +71,19 @@ This visualization reveals how users move across the culinary landscape and help
 ##  Folder and Data Structure
 
 - fetch_data.py # Pulls restaurant data from Yelp API
-- Database.py # Cleans and stores Yelp data
+- ETL.py # Cleans and stores Yelp data
 - cleaned_yelp_data.db # Cleaned Yelp restaurant data in SQLite format
-- Fake_Users.py # Creates synthetic users
+- Simulate_Users.py # Creates synthetic users
 - users.json # Synthetic/anonymized user reviews
 - Transition_Network.py # Builds the network & computes PageRank
 
 
 
-## 🧪 How to Run
+## How to Run
 
 1. Run `fetch_data.py` to pull raw Yelp data.  
-2. Execute `Database.py` to clean and store data.  
-3. Run `Fake_Users.py` to generate synthetic users (if needed).  
+2. Execute `ETL.py` to extract, transform and store data.  
+3. Run `Simulate_Users.py` to generate synthetic users (if needed).  
 4. Execute `Transition_Network.py` to build the network and compute PageRank.
 
 ---

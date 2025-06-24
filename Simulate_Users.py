@@ -14,10 +14,13 @@ import matplotlib.pyplot as plt
 from collections import Counter
 import json
 
-''' Create users, by assigning users corresponding to the number of reviews, in addition we assume that 
-users prefer similar restaurants in terms of price and category
-'''
-
+"""
+Simulates how users discover restaurants based on:
+- Price 
+- Category
+We assign to each review one user. Furthermore, for each restaurant each user
+cannot give  more than 1 review.
+"""
 # Load database
 conn = sqlite3.connect("cleaned_yelp_data.db")
 cursor = conn.cursor()
@@ -38,15 +41,16 @@ restaurant_info = {
 number_of_reviews = sum(row[3] for row in rows)
 number_of_users = 1050   # select total number of users (modellign parameter)
 
-#%% Assign number of reviews for each user assuming normal distribution
+#%% Assign number of reviews for each user assuming Poisson distribution
 users = []
 reviews_left = number_of_reviews
 i = 0  # user index, gives number of users who already got their reviews
-
+avg_reviews=20
 while reviews_left > 0 and i < number_of_users:
-    max_possible = min(np.random.normal(30,5), reviews_left)   # 30 = average number of reviews a user is giving, 5 is the variance
-    num_reviews_u = np.random.randint(1, max_possible + 1)  # transforms the ranodm number to an integer
-    
+    avg_reviews = 25
+    num_reviews_u = np.random.poisson(avg_reviews)  
+    max_possible = min(num_reviews_u, reviews_left)  
+   
     users.append({
         'user_id': f"user_{i}",
         'num_reviews': num_reviews_u

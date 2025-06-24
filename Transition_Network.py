@@ -13,14 +13,12 @@ import sqlite3
 import json
 import matplotlib.pyplot as plt
 import numpy as np
-import matplotlib.pyplot as plt
 import string
-import itertools
-from scipy import sparse
-import matplotlib.pyplot as plt
-import networkx as nx
 import matplotlib.colors as colors
 import random
+import matplotlib.patches as mpatches
+
+
 # Connect to Database
 conn = sqlite3.connect("cleaned_yelp_data.db")
 cursor = conn.cursor()
@@ -44,9 +42,11 @@ for user in users:
 # Connected all restaurant with at least 1 co visit
 G = nx.Graph()
 
-# Only add edges with ≥1 shared users
+boundary=10 # number of co-visitors for two restuarants to be connected
+
+# Only add edges with ≥boundary shared users
 for (r1, r2), count in co_visits.items():
-    if count >= 1:  
+    if count >= boundary:  
         G.add_edge(r1, r2, weight=count)
 
 # get information of restaurants
@@ -61,9 +61,12 @@ rating_dict = {rid: info[2] for rid, info in restaurant_info.items() if rid in G
 nx.set_node_attributes(G, rating_dict, name="rating") # the rating is the node value
 
 # Compute total transitions per restaurant (for normalization)
+
+
+
 total_transitions = defaultdict(float)
 for (u, v), count in co_visits.items():
-    if count >= 1:
+    if count >= boundary:
         total_transitions[u] += count
         total_transitions[v] += count
 
@@ -87,91 +90,134 @@ for u, v, data in G.edges(data=True):
 
 #%% Plot Graph
 
+
 # Group nodes by cleaned category
 category_to_nodes = defaultdict(list)
 for node in G_dir.nodes:
     category = restaurant_info.get(node, [None]*7)[6]  # cleaned_category
     category_to_nodes[category].append(node)
 
-# 
-selected_categories = [ 'Austrian', 'Vietnamese', 'Fast Food' ]  
-nodes_per_category =10
+# Select categories to visualize
+selected_categories = ['Austrian', 'German' 'Fast Food', 'Vietnamese', 'Chinese']
+nodes_per_category = 10
 
 sample_nodes = []
 for cat in selected_categories:
     nodes = category_to_nodes.get(cat, [])
     if len(nodes) < nodes_per_category:
-        print(f"⚠️  Not enough restaurants in '{cat}': only {len(nodes)} available.")
+        print(f"⚠️ Not enough restaurants in '{cat}': only {len(nodes)} available.")
     sample = random.sample(nodes, min(nodes_per_category, len(nodes)))
     sample_nodes.extend(sample)
 
 G_sample = G_dir.subgraph(sample_nodes)
 
-# Filter out weak edges (weight < 0.002)
+# Filter out weak edges (weight < 0.001)
 edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.001]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
-# Compute p_u and category labels
+# Compute visual properties
 p_u_values = {}
 category_labels = {}
 category_colors = {}
 
 categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes))
-cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))  # assign color per category
+cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))
 cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
-
 
 for node in G_sample.nodes:
     info = restaurant_info.get(node)
     rating = info[2]
     category = info[6]
-    name=info[1]
-    p_u = 1 - (rating - 1) / 4
-    p_u_values[node] = round(p_u, 2)
-    category_labels[node] = f"\n{rating, name}" # uncomment if no data issues
+    name = info[1]
+    category_labels[node] = f"{name}\n({rating})"
     category_colors[node] = cat_color_map[category]
 
 # Get edge weights
 edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
 
-# Draw
-pos = nx.kamada_kawai_layout(G_sample)  # More separation, sometimes better for directed graphs
+# Create figure with extra width for legend
+fig, ax = plt.subplots(figsize=(20, 12))
 
-fig, ax = plt.subplots(figsize=(15, 10))
+# Assign categories for layout
+for node in G_sample.nodes:
+    G_sample.nodes[node]["subset"] = restaurant_info[node][6]
 
-nx.draw_networkx_nodes(G_sample, pos, node_size=300, alpha=0.5,
-                       node_color=[category_colors[n] for n in G_sample.nodes], ax=ax)
+# Generate multipartite layout
+pos = nx.multipartite_layout(G_sample)
+
+# Draw network
+nx.draw_networkx_nodes(
+    G_sample, pos, 
+    node_size=800,
+    node_color=[category_colors[n] for n in G_sample.nodes],
+    alpha=0.8,
+    ax=ax
+)
+
+
+edge_vmin = 0
+edge_vmax = np.percentile(edge_weights, 95)  # Use 95th percentile as max to prevent outlier distortion
+
 
 nx.draw_networkx_edges(
     G_sample,
     pos,
     edge_color=edge_weights,
     edge_cmap=plt.cm.Blues,
-    arrows=True,
-    arrowstyle='-|>',
-    connectionstyle='arc3,rad=0.4',  # curve arrows to reduce overlap
-    arrowsize=30,            # ← Make this bigger (default is 10)
-    width=2.5, 
+    edge_vmin=edge_vmin,
+    edge_vmax=edge_vmax,  # This ensures darkest blue is used
+    width=2,
+    arrows=True,                # Ensure arrows are visible
+    arrowstyle='-|>',           # Standard arrow
+    arrowsize=20,               # Larger arrowhead
+    connectionstyle='arc3,rad=0.2',  # Gentle curves   
     ax=ax
+    
 )
 
 
-nx.draw_networkx_labels(G_sample, pos, labels=category_labels, font_size=10, ax=ax)
-
-# Colorbar for edge weights
-norm = colors.Normalize(vmin=-0.1, vmax=0.1)  # adjsut for better visibility
-sm = plt.cm.ScalarMappable(norm=norm, cmap=plt.cm.Blues)
-sm.set_array(edge_weights)
+sm = plt.cm.ScalarMappable(
+    norm=colors.Normalize(vmin=edge_vmin, vmax=edge_vmax),
+    cmap=plt.cm.Blues
+)
 
 
+nx.draw_networkx_labels(
+    G_sample, pos, 
+    labels=category_labels, 
+    font_size=10,
+    ax=ax
+)
 
+# Create legend
+legend_handles = [
+    mpatches.Patch(color=cat_color_map[cat], label=cat)
+    for cat in sorted(set(restaurant_info[node][6] for node in G_sample.nodes))
+]
 
-cbar = plt.colorbar(sm, ax=ax, shrink=1.2)
-cbar.set_label("Transition Probability", fontsize=26)
-cbar.ax.tick_params(labelsize=26)  
-plt.title("Restaurant Transition Network\nNode Color = Category, Edge Color = Transition Probability", fontsize=26)
-plt.tight_layout()
-#plt.savefig('TransitionNW.png')
+# Add flattened legend
+legend = plt.legend(
+    handles=legend_handles,
+    fontsize=24,
+    bbox_to_anchor=(0, 1.2),
+    loc='upper left',
+    ncol=3,  # Adjust number of columns as needed
+    frameon=False,
+    handletextpad=0.3,
+    columnspacing=0.8
+)
+
+# Add colorbar
+
+cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
+cbar.set_label("Transition Probability", fontsize=24)
+cbar.ax.tick_params(labelsize=22)
+
+# Adjust layout
+
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave 10% space on right for legend
+
+plt.show()
 
 
 
