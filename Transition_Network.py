@@ -39,7 +39,7 @@ for user in users:
         pair = tuple(sorted((r1, r2)))
         co_visits[pair] += 1
 
-# Connected all restaurant with at least 1 co visit
+# Connected all restaurant with at least 'boundary' co visit
 G = nx.Graph()
 
 boundary=10 # number of co-visitors for two restuarants to be connected
@@ -61,8 +61,6 @@ rating_dict = {rid: info[2] for rid, info in restaurant_info.items() if rid in G
 nx.set_node_attributes(G, rating_dict, name="rating") # the rating is the node value
 
 # Compute total transitions per restaurant (for normalization)
-
-
 
 total_transitions = defaultdict(float)
 for (u, v), count in co_visits.items():
@@ -112,7 +110,7 @@ for cat in selected_categories:
 
 G_sample = G_dir.subgraph(sample_nodes)
 
-# Filter out weak edges (weight < 0.001)
+# Filter out weak edges (weight < 0.005)
 edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.005]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
@@ -166,23 +164,23 @@ nx.draw_networkx_edges(
     edge_color=edge_weights,
     edge_cmap=plt.cm.Blues,
     edge_vmin=edge_vmin,
-    edge_vmax=edge_vmax,  # This ensures darkest blue is used
+    edge_vmax=edge_vmax, 
     width=2,
-    arrows=True,                # Ensure arrows are visible
-    arrowstyle='-|>',           # Standard arrow
-    arrowsize=40,               # Larger arrowhead
+    arrows=True,               
+    arrowstyle='-|>',           
+    arrowsize=40,              
     connectionstyle='arc3,rad=0.2',  # Gentle curves   
     ax=ax
     
 )
 
-
+# plot colorbar
 sm = plt.cm.ScalarMappable(
     norm=colors.Normalize(vmin=edge_vmin, vmax=edge_vmax),
     cmap=plt.cm.Blues
 )
 
-
+# plot labels
 nx.draw_networkx_labels(
     G_sample, pos, 
     labels=category_labels, 
@@ -197,8 +195,7 @@ legend_handles = [
 ]
 
 
-
-# Add flattened legend
+# legend of categrories
 legend = plt.legend(
     handles=legend_handles,
     fontsize=24,
@@ -247,7 +244,7 @@ for cat in selected_categories:
 
 G_sample = G_dir.subgraph(sample_nodes)
 
-# Filter out weak edges (weight < 0.001)
+# Filter out weak edges (weight < 0.005)
 edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.005]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
@@ -322,11 +319,11 @@ nx.draw_networkx_edges(
     edge_color=edge_weights,
     edge_cmap=plt.cm.Blues,
     edge_vmin=edge_vmin,
-    edge_vmax=edge_vmax,  # This ensures darkest blue is used
+    edge_vmax=edge_vmax, 
     width=2,
-    arrows=True,                # Ensure arrows are visible
-    arrowstyle='-|>',           # Standard arrow
-    arrowsize=40,               # Larger arrowhead
+    arrows=True,                
+    arrowstyle='-|>',           
+    arrowsize=40,              
     connectionstyle='arc3,rad=0.2',  # Gentle curves   
     ax=ax
     
@@ -345,7 +342,6 @@ nx.draw_networkx_labels(
     font_size=20,
     ax=ax
 )
-
 
 
 
@@ -423,7 +419,7 @@ for i, (rest_id, score) in enumerate(sorted_nodes[:22], 1):
 
 sorted_nodes_by_stationary = sorted(stationary.items(), key=lambda x: x[1])
 
-print("😞 Worse 10 Restaurants by Stationary Distribution:\n")
+print(" Worse 10 Restaurants by Stationary Distribution:\n")
 for i, (rest_id, score) in enumerate(sorted_nodes_by_stationary[:10], 1):
     info = restaurant_info.get(rest_id)
     if info:
@@ -453,7 +449,7 @@ for rest_id, prob in stationary.items():
 avg_stationary = {cat: np.mean(vals) for cat, vals in category_stationary.items()}
 avg_rating = {cat: np.mean(vals) for cat, vals in category_ratings.items()}
 
-#%%
+#%% Plot averages in a log-plot
 plt.figure(figsize=(10, 6))
 
 for cat in avg_stationary:
@@ -479,7 +475,7 @@ plt.show()
 
 print(avg_stationary)
 
-#%%
+#%% Plot anonumous version in a not-log plot
 
 # Generate label list: A, B, ..., Z, AA, AB, ..., ZZ
 def generate_labels():
