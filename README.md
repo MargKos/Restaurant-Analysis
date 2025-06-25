@@ -15,17 +15,24 @@ based on Yelp data. It explores the relationship between **rating** (quality) an
 
 3. **User Simulation**  
    Created synthetic users to simulate co-visitation behavior based on realistic preferences. Here we assumed, that a user
-   is prefering restaurants with similar price and category, where price is more important than categroy ('Fake_Users.py').
-   Furthermore, we assume that the number of reviews a visitor is giving is Poisson distributed.
+   is prefering restaurants with similar price and category, where price is more important than categroy ('Simulate_Users.py').
+   Furthermore, we assume that the number of reviews a visitor is giving is Poisson distributed and a user can rate a restaurant only once.
 
 4. **Transition Network Construction**  
    Built a directed weighted network where nodes are restaurants, and edge weights depend on both co-visitation frequency and rating. Only 
    restarants with at least 'boundary' co-visits are connected and part of the final network.
-   The lower the rating, the higher the probability of an user to leave the restaurant: p_u = 1 - (rating_u - 1) / 4
+   The lower the rating, the higher the probability of an user to leave the restaurant: p_u = 1 - (rating_u - 1) / 4.
    The transition probability from restaurant u to v is proportional to the co-visitation frequency between u and v, normalized by the total number of transitions from u.
+   This directed network graph illustrates **user transition dynamics** between restaurants. The network is built from:
     
+    - **Simulated users** who move between restaurants based on co-visitation frequency and rating-driven likelihoods.
+    - **Nodes** represent individual restaurants, colored by their **category** (e.g., Fast Food, Austrian, Vietnamese).
+    - **Node labels** show the **restaurant's rating and name** (not in public version).
+    - **Edges** represent **directional transitions**. Darker edges indicate **higher transition probabilities**.
+
+
     
-5. **Markov Modeling**  
+5. **Popularity Modeling**  
    Applied PageRank to model long-term visitation behavior and compute the stationary distribution.
    Herefore, chose the right damping factor alpha and test statioanry property.
 
@@ -35,7 +42,7 @@ based on Yelp data. It explores the relationship between **rating** (quality) an
 
 - Popularity and quality are **not always aligned**.  
 - The **stationary distribution** reveals to which restaurants users tend to return to over time.  
-- Certain cuisines (e.g., Burgers, Thai, Indian displays by letters in the plot below) show stronger staying power than others.  
+- Certain cuisines (e.g., Burgers, Thai, Indian displays anonymous by letters in the plot below) show stronger staying power than others.  
 
 #  Results
 
@@ -53,18 +60,11 @@ This helps distinguish between categories that are broadly appealing and those t
 
 ## ![Results](TransitionNW.png)
 
-This directed network graph illustrates **user transition dynamics** between restaurants. The network is built from:
-
-- **Simulated users** who move between restaurants based on co-visitation frequency and rating-driven likelihoods.
-- **Nodes** represent individual restaurants, colored by their **category** (e.g., Fast Food, Austrian, Vietnamese).
-- **Node labels** show the **restaurant's rating and name**.
-- **Edges** represent **directional transitions**. Darker edges indicate **higher transition probabilities**.
-
 
 This visualization reveals how users move across the culinary landscape and helps uncover **category-level dynamics** and **local popularity hubs**.
-For example, we observe strong exchange between the restaurants of the grey cluster 'K'. Where the restarants
-of the category 'C' and 'Q' are not as well connected. Furthermore the second restaurant of the 
-grey cluster experience a lot of flow. 
+For example, we observe strong exchange between the restaurants of the brown cluster 'K'. Where the restarants
+of the category 'C' and 'Q' are not as well connected. Furthermore the second (from below) restaurant of the 
+brown cluster 'K' experience a lot of flow and serves as a hub. 
 
 ##  Folder and Data Structure
 
@@ -96,7 +96,7 @@ The project demonstrates how **graph-based modeling** can provide richer insight
 
 - No original Yelp user data is published.  
 - All users are **synthetic**.
-- Restaurant names may be pseudonymized in any released visualizations.
+- Restaurant names, ratings, categories are pseudonymized in any released visualizations.
 
 ---
 
