@@ -119,6 +119,12 @@ category_map = {
 
 
 def clean_category(category_text):
+    """Maps a raw Yelp category to a standardized label.
+    Args:
+        category_text (str): Raw category string from Yelp.
+    Returns:
+        str: Standardized label (e.g., 'German') or 'Unidentified'.
+    """
     category_text = category_text.lower()  # Lowercase everything
     for key, label in category_map.items():
         if key.lower() in category_text:

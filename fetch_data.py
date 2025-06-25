@@ -10,7 +10,7 @@ import sqlite3
 import requests
 from Key import API_KEY
 
-# calls Yelp-API restaurannts, extracts from json and saves as SQL database
+# calls Yelp-API restaurants, extracts from json and saves as SQL database
 
 # Configuration: specify location and type 
 
@@ -38,6 +38,13 @@ CREATE TABLE IF NOT EXISTS restaurants (
 
 
 def fetch_yelp(offset=0):
+    """Fetches Yelp businesses data for a given offset.
+    Args:
+        offset (int): Pagination offset for API results.
+    Returns:
+        List[dict]: List of business data (empty list on error).
+    """
+    ...
     url = "https://api.yelp.com/v3/businesses/search"
     params = {
         "location": LOCATION,
@@ -78,7 +85,7 @@ for offset in range(0, 200, 50):
         ))
 
 conn.commit()  
-
+#%% Test
     
 # Connect to the database
 conn = sqlite3.connect("yelp_data.db")  # data_base name

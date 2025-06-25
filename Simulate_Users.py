@@ -39,9 +39,9 @@ restaurant_info = {
 
 
 number_of_reviews = sum(row[3] for row in rows)
-number_of_users = 1050   # select total number of users (modellign parameter)
+number_of_users = 1050   # select total number of users (modelling parameter)
 
-#%% Assign number of reviews for each user assuming Poisson distribution
+#%% Assign number of reviews for each user assuming Poisson distribution with average number of 25 ratings
 users = []
 reviews_left = number_of_reviews
 i = 0  # user index, gives number of users who already got their reviews
@@ -74,7 +74,7 @@ restaurant_id_list = [row[0] for row in rows]
 
 
 #%% Assign restaurant to users by their preferences, the first restaurant is chosen randomly the second choice prefers
-#restaurant with similar price and category
+# arestaurant with similar price and category
 
 for user in users:
     number = user['num_reviews']

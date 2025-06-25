@@ -17,7 +17,9 @@ import string
 import matplotlib.colors as colors
 import random
 import matplotlib.patches as mpatches
+from matplotlib.patches import Patch
 
+random.seed(42)
 
 # Connect to Database
 conn = sqlite3.connect("cleaned_yelp_data.db")
@@ -44,7 +46,7 @@ G = nx.Graph()
 
 boundary=10 # number of co-visitors for two restuarants to be connected
 
-# Only add edges with ≥boundary shared users
+# Only add edges with ≥boundary shared users, other restaurants are NOT presented as nodes in the network
 for (r1, r2), count in co_visits.items():
     if count >= boundary:  
         G.add_edge(r1, r2, weight=count)
@@ -84,9 +86,11 @@ for u, v, data in G.edges(data=True):
 
     G_dir.add_edge(u, v, weight=norm_u * p_u) # update edges
     G_dir.add_edge(v, u, weight=norm_v * p_v)
+    
 
 
-#%% Plot Graph
+
+#%% Plot Graph and Set Color
 
 
 # Group nodes by cleaned category
@@ -94,11 +98,19 @@ category_to_nodes = defaultdict(list)
 for node in G_dir.nodes:
     category = restaurant_info.get(node, [None]*7)[6]  # cleaned_category
     category_to_nodes[category].append(node)
+    
+categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G.nodes))
+n_categories = len(categories)
+cmap = plt.cm.get_cmap('Dark2', n_categories)  # Use 'tab20' for distinct colors
+category_colors = {cat: cmap(i) for i, cat in enumerate(categories)}
 
+
+
+#%%
 # Select categories to visualize
 selected_categories = ['Asian','Italian','Fast Food']
 
-nodes_per_category = 10
+nodes_per_category = 10  # maximal number of restaurants presented, for better visualization
 
 sample_nodes = []
 for cat in selected_categories:
@@ -110,18 +122,15 @@ for cat in selected_categories:
 
 G_sample = G_dir.subgraph(sample_nodes)
 
-# Filter out weak edges (weight < 0.005)
+# Filter out weak edges (weight <= 0.005)
 edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.005]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
 # Compute visual properties
 p_u_values = {}
 category_labels = {}
-category_colors = {}
 
-categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes))
-cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))
-cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
+
 
 for node in G_sample.nodes:
     info = restaurant_info.get(node)
@@ -129,7 +138,7 @@ for node in G_sample.nodes:
     category = info[6]
     name = info[1]
     category_labels[node] = f"{name}\n({rating})"
-    category_colors[node] = cat_color_map[category]
+  
 
 # Get edge weights
 edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
@@ -141,18 +150,19 @@ fig, ax = plt.subplots(figsize=(20, 12))
 for node in G_sample.nodes:
     G_sample.nodes[node]["subset"] = restaurant_info[node][6]
 
-# Generate multipartite layout
+# the position of the nodes corresponds to the category
 pos = nx.multipartite_layout(G_sample)
 
-# Draw network
+# plot nodes
 nx.draw_networkx_nodes(
-    G_sample, pos, 
+    G_sample, 
+    pos, 
     node_size=800,
-    node_color=[category_colors[n] for n in G_sample.nodes],
+    node_color=[category_colors[restaurant_info[n][6]] for n in G_sample.nodes],  # Corrected comprehension
     alpha=0.8,
     ax=ax
 )
-
+ #plot edges
 
 edge_vmin = 0
 edge_vmax = np.percentile(edge_weights, 95)  # Use 95th percentile as max to prevent outlier distortion
@@ -174,28 +184,22 @@ nx.draw_networkx_edges(
     
 )
 
-# plot colorbar
+# plot colorbar of edges
 sm = plt.cm.ScalarMappable(
     norm=colors.Normalize(vmin=edge_vmin, vmax=edge_vmax),
     cmap=plt.cm.Blues
 )
 
-# plot labels
-nx.draw_networkx_labels(
-    G_sample, pos, 
-    labels=category_labels, 
-    font_size=20,
-    ax=ax
-)
 
-# Create legend
+
+# Create legend 
 legend_handles = [
-    mpatches.Patch(color=cat_color_map[cat], label=cat)
+    Patch(color=category_colors[cat], label=cat)  # Use category_colors instead of cat_color_map
     for cat in sorted(set(restaurant_info[node][6] for node in G_sample.nodes))
 ]
 
 
-# legend of categrories
+# plot legend of categrories
 legend = plt.legend(
     handles=legend_handles,
     fontsize=24,
@@ -207,7 +211,7 @@ legend = plt.legend(
     columnspacing=0.8
 )
 
-# Add colorbar
+# Add colorbar of transition probabilities
 
 cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
 cbar.set_label("Transition Probability", fontsize=24)
@@ -220,9 +224,6 @@ plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave 10% space on right for legend
 plt.show()
 
 #%% Anonymous Version
-
-
-
 # Group nodes by cleaned category
 category_to_nodes = defaultdict(list)
 for node in G_dir.nodes:
@@ -231,9 +232,19 @@ for node in G_dir.nodes:
 
 # Select categories to visualize
 selected_categories = ['Asian','Italian','Fast Food']
-
 nodes_per_category = 10
 
+
+
+# Create anonymous label mapping
+category_code_map = {
+    'Asian': 'C',
+    'Fast Food': 'K',
+    'Italian': 'Q'
+    
+}
+
+# Sample nodes from selected categories
 sample_nodes = []
 for cat in selected_categories:
     nodes = category_to_nodes.get(cat, [])
@@ -248,70 +259,30 @@ G_sample = G_dir.subgraph(sample_nodes)
 edges_to_keep = [(u, v) for u, v, d in G_sample.edges(data=True) if d["weight"] > 0.005]
 G_sample = G_sample.edge_subgraph(edges_to_keep).copy()
 
-# Compute visual properties
-p_u_values = {}
-category_labels = {}
-category_colors = {}
-
-categories = list(set(restaurant_info.get(n, [""]*7)[6] for n in G_sample.nodes))
-
-cmap_nodes = plt.cm.get_cmap("Dark2", len(categories))
-cat_color_map = {cat: cmap_nodes(i) for i, cat in enumerate(categories)}
-
-for node in G_sample.nodes:
-    info = restaurant_info.get(node)
-    rating = info[2]
-    category = info[6]
-    name = info[1]
-    category_colors[node] = cat_color_map[category]
-
-# Get edge weights
-edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
-
 # Create figure with extra width for legend
 fig, ax = plt.subplots(figsize=(20, 12))
 
-# Assign categories for layout
+# Assign categories for layout and node colors
 for node in G_sample.nodes:
     G_sample.nodes[node]["subset"] = restaurant_info[node][6]
 
 # Generate multipartite layout
 pos = nx.multipartite_layout(G_sample)
 
-# Draw network
+# Draw nodes with consistent colors
 nx.draw_networkx_nodes(
-    G_sample, pos, 
+    G_sample, 
+    pos, 
     node_size=800,
-    node_color=[category_colors[n] for n in G_sample.nodes],
+    node_color=[category_colors[restaurant_info[n][6]] for n in G_sample.nodes],
     alpha=0.8,
     ax=ax
 )
 
-
+# Draw edges with weight-based coloring
+edge_weights = [data["weight"] for u, v, data in G_sample.edges(data=True)]
 edge_vmin = 0
-edge_vmax = np.percentile(edge_weights, 95)  # Use 95th percentile as max to prevent outlier distortion
-
-
-category_code_map = {
-    'Asian': 'C',
-    'Italian': 'Q',
-    'Fast Food': 'K'
-}
-
-
-legend_handles = [
-    mpatches.Patch(color=cat_color_map[cat], label=code)
-    for cat, code in category_code_map.items()
-]
-
-
-plt.legend(
-    handles=legend_handles,
-    title="Category Codes",
-    fontsize=12,
-    bbox_to_anchor=(1.05, 1),
-    frameon=False
-)
+edge_vmax = np.percentile(edge_weights, 95)  # Use 95th percentile as max
 
 nx.draw_networkx_edges(
     G_sample,
@@ -321,54 +292,45 @@ nx.draw_networkx_edges(
     edge_vmin=edge_vmin,
     edge_vmax=edge_vmax, 
     width=2,
-    arrows=True,                
-    arrowstyle='-|>',           
-    arrowsize=40,              
-    connectionstyle='arc3,rad=0.2',  # Gentle curves   
+    arrows=True,
+    arrowstyle='-|>',
+    arrowsize=40,
+    connectionstyle='arc3,rad=0.2',
     ax=ax
-    
 )
 
-
+# Create colorbar for edge weights
 sm = plt.cm.ScalarMappable(
     norm=colors.Normalize(vmin=edge_vmin, vmax=edge_vmax),
     cmap=plt.cm.Blues
 )
 
+# Create legend with anonymous labels 
+legend_handles = [
+    mpatches.Patch(color=category_colors[cat], label=category_code_map[cat])
+    for cat in selected_categories
+]
 
-nx.draw_networkx_labels(
-    G_sample, pos, 
-    labels=category_labels, 
-    font_size=20,
-    ax=ax
-)
-
-
-
-
-# Add flattened legend
+# Add legend for categories
 legend = plt.legend(
     handles=legend_handles,
     fontsize=24,
     bbox_to_anchor=(0, 1),
     loc='upper left',
-    ncol=3,  # Adjust number of columns as needed
+    ncol=3,
     frameon=False,
     handletextpad=0.3,
     columnspacing=0.8
 )
 
 # Add colorbar
-
 cbar = plt.colorbar(sm, ax=ax, shrink=0.7)
 cbar.set_label("Transition Probability", fontsize=24)
 cbar.ax.tick_params(labelsize=24)
 
 # Adjust layout
-
 plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave 10% space on right for legend
-
-plt.savefig('TransitionNW')
+plt.savefig('TransitionNW', dpi=300, bbox_inches='tight')
 
 
 #%% Calculates Page Rank
@@ -449,18 +411,19 @@ for rest_id, prob in stationary.items():
 avg_stationary = {cat: np.mean(vals) for cat, vals in category_stationary.items()}
 avg_rating = {cat: np.mean(vals) for cat, vals in category_ratings.items()}
 
-#%% Plot averages in a log-plot
+#%% Plot averages in a (log)-plot
+
 plt.figure(figsize=(10, 6))
 
 for cat in avg_stationary:
     x = avg_rating.get(cat, 0)
     y = avg_stationary[cat]
     if x > 0 and y > 0:  # log scale requires positive values
-        plt.scatter(x, y)
+        plt.scatter(x, y,color=category_colors[cat])
         plt.annotate(cat, (x, y), fontsize=12, alpha=0.8)
 
-plt.xscale("log")
-plt.yscale("log")
+#plt.xscale("log")
+#plt.yscale("log")
 
 plt.xlabel('Average Rating (log scale)', fontsize=15)
 plt.ylabel('Stationary Distribution (log scale)', fontsize=15)
@@ -483,6 +446,7 @@ def generate_labels():
     for size in range(1, 3):  # 1-letter and 2-letter combos
         for combo in itertools.product(letters, repeat=size):
             yield ''.join(combo)
+            
 
 labels_gen = generate_labels()
 label_map = {cat: label for cat, label in zip(sorted(avg_stationary.keys()), labels_gen)}
@@ -494,7 +458,7 @@ for cat in sorted(avg_stationary.keys()):
     x = avg_rating.get(cat, 0)
     y = avg_stationary.get(cat, 0)
     if x > 0 and y > 0:
-        plt.scatter(x, y)
+        plt.scatter(x, y,color=category_colors[cat],)
         plt.annotate(label_map[cat], (x, y), fontsize=13, alpha=0.8)
 
 plt.xlabel('Average Rating', fontsize=25)
