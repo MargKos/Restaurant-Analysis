@@ -153,14 +153,32 @@ for node in G_sample.nodes:
 # the position of the nodes corresponds to the category
 pos = nx.multipartite_layout(G_sample)
 
-# plot nodes
+# Draw nodes with category colors
 nx.draw_networkx_nodes(
     G_sample, 
     pos, 
     node_size=800,
-    node_color=[category_colors[restaurant_info[n][6]] for n in G_sample.nodes],  # Corrected comprehension
+    node_color=[category_colors[restaurant_info[n][6]] for n in G_sample.nodes],
     alpha=0.8,
     ax=ax
+)
+
+# Create label dictionary with names and ratings
+node_labels = {
+    n: f"{restaurant_info[n][1]}\n({restaurant_info[n][2]:.1f})"  # Name + Rating
+    for n in G_sample.nodes
+}
+
+# Draw labels with improved visibility
+nx.draw_networkx_labels(
+    G_sample,
+    pos,
+    labels=node_labels,
+    font_size=17,  # Slightly smaller than default
+    font_color='black',  # High contrast
+    font_weight='bold',
+    ax=ax,
+    verticalalignment='center'  # Better centering
 )
  #plot edges
 

@@ -63,7 +63,7 @@ This helps distinguish between categories that are broadly appealing and those t
 
 This visualization reveals how users move across the culinary landscape and helps uncover **category-level dynamics** and **local popularity hubs**.
 For example, we observe strong exchange between the restaurants of the brown cluster 'K'. Where the restarants
-of the category 'C' and 'Q' are not as well connected. Furthermore the second (from below) restaurant of the 
+of the category 'C' and 'Q' are not as well connected. Furthermore the first (from below) restaurant of the 
 brown cluster 'K' experience a lot of flow and serves as a hub. 
 
 ##  Folder and Data Structure
