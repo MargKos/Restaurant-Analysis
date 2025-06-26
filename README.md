@@ -36,7 +36,13 @@ based on Yelp data. It explores the relationship between **rating** (quality) an
    Applied PageRank to model long-term visitation behavior and compute the stationary distribution.
    Herefore, chose the right damping factor alpha and test statioanry property.
 
----
+6. **Case Study**  
+Simulate "what if I opened a new restaurant?" scenario. This file simulates how a new restaurant integrates into the current ecosystem and evaluates its exposure.
+
+➡️ Version A: Category A, Price A
+➡️ Version B: Category B, Price B
+
+It helps to identify which category and price are more beneficial.
 
 ##  Key Insights
 
@@ -62,9 +68,9 @@ This helps distinguish between categories that are broadly appealing and those t
 
 
 This visualization reveals how users move across the culinary landscape and helps uncover **category-level dynamics** and **local popularity hubs**.
-For example, we observe strong exchange between the restaurants of the brown cluster 'K'. Where the restarants
-of the category 'C' and 'Q' are not as well connected. Furthermore the first (from below) restaurant of the 
-brown cluster 'K' experience a lot of flow and serves as a hub. 
+For example, we observe strong exchange between the restaurants of the categroy 'K'. Where the restarants
+of the category 'C' and 'Q' are not as well connected. Furthermore the first (from above) restaurant of the 
+ categroy 'K' experience a lot of flow and serves as a hub. 
 
 ##  Folder and Data Structure
 
@@ -74,6 +80,7 @@ brown cluster 'K' experience a lot of flow and serves as a hub.
 - Simulate_Users.py # Creates synthetic users
 - users.json # Synthetic/anonymized user reviews
 - Transition_Network.py # Builds the network & computes PageRank
+- Case_Study.py #compares to restaurant-opening scenarios
 
 
 
@@ -83,7 +90,7 @@ brown cluster 'K' experience a lot of flow and serves as a hub.
 2. Execute `ETL.py` to extract, transform and store data.  
 3. Run `Simulate_Users.py` to generate synthetic users (if needed).  
 4. Execute `Transition_Network.py` to build the network and compute PageRank.
-
+4. Try out `Case_Study.py` to test different scenarios.
 ---
 
 ## Results

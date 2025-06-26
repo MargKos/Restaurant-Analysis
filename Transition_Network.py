@@ -20,6 +20,7 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import Patch
 
 random.seed(42)
+np.random.seed(42)
 
 # Connect to Database
 conn = sqlite3.connect("cleaned_yelp_data.db")
@@ -350,6 +351,9 @@ cbar.ax.tick_params(labelsize=24)
 plt.tight_layout(rect=[0, 0, 0.9, 1])  # Leave 10% space on right for legend
 plt.savefig('TransitionNW', dpi=300, bbox_inches='tight')
 
+#%% save network
+
+nx.write_graphml(G_dir, "restaurant_network.graphml")
 
 #%% Calculates Page Rank
 stationary = nx.pagerank(G_dir,alpha=1, weight='weight')
